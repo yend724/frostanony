@@ -7,7 +7,7 @@ type UseFaceDetectionReturn = {
   error: string | null
   lastDetectionResult: FaceDetectionResult | null
   initialize: () => Promise<void>
-  detectFaces: (image: ImageData | HTMLImageElement | HTMLCanvasElement) => Promise<void>
+  detectFaces: (image: ImageData | HTMLImageElement | HTMLCanvasElement) => Promise<FaceDetectionResult | null>
   clearError: () => void
 }
 
@@ -48,12 +48,12 @@ export const useFaceDetection = (): UseFaceDetectionReturn => {
   const detectFaces = useCallback(async (image: ImageData | HTMLImageElement | HTMLCanvasElement) => {
     if (!detectorRef.current) {
       setError('顔検出器が初期化されていません')
-      return
+      return null
     }
 
     if (!detectorRef.current.isInitialized()) {
       setError('顔検出器が初期化されていません')
-      return
+      return null
     }
 
     try {
@@ -62,8 +62,10 @@ export const useFaceDetection = (): UseFaceDetectionReturn => {
       
       const result = await detectorRef.current.detectFaces(image)
       setLastDetectionResult(result)
+      return result
     } catch (err) {
       setError('顔の検出に失敗しました')
+      return null
     } finally {
       setIsDetecting(false)
     }

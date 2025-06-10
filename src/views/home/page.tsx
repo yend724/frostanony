@@ -5,7 +5,7 @@ import { useImageUpload, ImageUpload } from '@/features/image-upload'
 import { useFaceDetection } from '@/features/face-detection'
 import { EffectControls, EffectType, EffectStrength } from '@/features/image-effects'
 import { useImageProcessor } from '@/features/image-processing'
-import { ImagePreview, FaceDetectionCanvas } from '@/shared/ui'
+import { FaceDetectionCanvas, ToastContainer, useToast } from '@/shared/ui'
 import { createImageFromFile } from '@/shared/lib'
 
 const HomePage: React.FC = () => {
@@ -40,10 +40,19 @@ const HomePage: React.FC = () => {
   const [selectedStrength, setSelectedStrength] = useState<EffectStrength>(EffectStrength.MEDIUM)
   const [isApplied, setIsApplied] = useState(false)
   
+  const { toasts, showSuccess, showError, showWarning, removeToast } = useToast()
+  
   // 顔検出の初期化
   useEffect(() => {
-    initializeFaceDetection()
-  }, [initializeFaceDetection])
+    const initializeDetection = async () => {
+      try {
+        await initializeFaceDetection()
+      } catch {
+        showError('顔検出の初期化に失敗しました', '再度ページを読み込んでください')
+      }
+    }
+    initializeDetection()
+  }, [initializeFaceDetection, showError])
   
   // 画像がアップロードされたら自動的に顔検出を実行
   useEffect(() => {
@@ -51,29 +60,47 @@ const HomePage: React.FC = () => {
       const detectFacesInImage = async () => {
         try {
           const imageElement = await createImageFromFile(image)
-          await detectFaces(imageElement)
+          const result = await detectFaces(imageElement)
+          if (result && result.count > 0) {
+            showSuccess(`${result.count}件の顔を検出しました`)
+          } else {
+            showWarning('顔が検出されませんでした', '画像を確認してください')
+          }
         } catch (err) {
           console.error('顔検出エラー:', err)
+          showError('顔検出に失敗しました', '画像形式を確認してください')
         }
       }
       detectFacesInImage()
     }
-  }, [image, isInitialized, detectFaces])
+  }, [image, isInitialized, detectFaces, showSuccess, showWarning, showError])
   
   // 適用ボタンのハンドラー
   const handleApply = useCallback(async () => {
     if (!image || !lastDetectionResult) return
     
-    setIsApplied(true)
-    await processImage(image, lastDetectionResult, selectedEffect, selectedStrength)
-  }, [image, lastDetectionResult, selectedEffect, selectedStrength, processImage])
+    try {
+      setIsApplied(true)
+      await processImage(image, lastDetectionResult, selectedEffect, selectedStrength)
+      showSuccess('エフェクトを適用しました')
+    } catch (err) {
+      console.error('画像処理エラー:', err)
+      showError('エフェクトの適用に失敗しました', '再度お試しください')
+      setIsApplied(false)
+    }
+  }, [image, lastDetectionResult, selectedEffect, selectedStrength, processImage, showSuccess, showError])
   
   // 再適用（エフェクトや強度変更時）
   const handleReapply = useCallback(async () => {
     if (!lastDetectionResult) return
     
-    await reprocessImage(lastDetectionResult, selectedEffect, selectedStrength)
-  }, [lastDetectionResult, selectedEffect, selectedStrength, reprocessImage])
+    try {
+      await reprocessImage(lastDetectionResult, selectedEffect, selectedStrength)
+    } catch (err) {
+      console.error('再処理エラー:', err)
+      showError('エフェクトの再適用に失敗しました', '再度お試しください')
+    }
+  }, [lastDetectionResult, selectedEffect, selectedStrength, reprocessImage, showError])
   
   // エフェクト変更時の処理
   const handleEffectChange = useCallback((effect: EffectType) => {
@@ -99,9 +126,6 @@ const HomePage: React.FC = () => {
   }, [clearImage, resetProcessor])
   
   const error = uploadError || detectionError || processingError
-  const showStatusMessage = isDetecting || (lastDetectionResult && !isApplied)
-  const statusMessage = isDetecting ? '顔を検出中...' : 
-    lastDetectionResult && !isApplied ? `${lastDetectionResult.count}個の顔を検出しました` : ''
 
   return (
     <main className="min-h-screen bg-gradient-to-br from-orange-50 to-orange-100">
@@ -160,7 +184,7 @@ const HomePage: React.FC = () => {
                 <div className="flex justify-between items-center mb-4">
                   <h3 className="text-lg font-semibold text-gray-900">
                     {lastDetectionResult 
-                      ? `顔検出結果 (${lastDetectionResult.count}個の顔を検出)`
+                      ? `顔検出結果 (${lastDetectionResult.count})`
                       : '画像プレビュー'
                     }
                   </h3>
@@ -183,8 +207,7 @@ const HomePage: React.FC = () => {
                       <img
                         src={imageUrl}
                         alt="アップロード画像"
-                        className="border-none rounded-lg shadow-sm block mx-auto"
-                        style={{ maxWidth: 'none', maxHeight: 'none' }}
+                        className="border-none rounded-lg shadow-sm block mx-auto max-w-full h-auto"
                         onLoad={(e) => {
                           const img = e.target as HTMLImageElement
                           if (img.naturalWidth > 0) {
@@ -207,8 +230,7 @@ const HomePage: React.FC = () => {
                     <img
                       src={processedCanvas.toDataURL()}
                       alt="処理済み画像"
-                      className="border-none rounded-lg shadow-sm block mx-auto"
-                      style={{ maxWidth: 'none', maxHeight: 'none' }}
+                      className="border-none rounded-lg shadow-sm block mx-auto max-w-full h-auto"
                     />
                   </div>
                 </div>
@@ -217,10 +239,16 @@ const HomePage: React.FC = () => {
                 </p>
                 <button
                   onClick={() => {
-                    const link = document.createElement('a')
-                    link.download = 'anonymized-image.png'
-                    link.href = processedCanvas.toDataURL()
-                    link.click()
+                    try {
+                      const link = document.createElement('a')
+                      link.download = 'anonymized-image.png'
+                      link.href = processedCanvas.toDataURL()
+                      link.click()
+                      showSuccess('画像をダウンロードしました')
+                    } catch (err) {
+                      console.error('ダウンロードエラー:', err)
+                      showError('ダウンロードに失敗しました', '再度お試しください')
+                    }
                   }}
                   className="w-full mt-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 transition-colors font-medium"
                 >
@@ -231,6 +259,7 @@ const HomePage: React.FC = () => {
           </div>
         </div>
       </div>
+      <ToastContainer toasts={toasts} onClose={removeToast} />
     </main>
   )
 }

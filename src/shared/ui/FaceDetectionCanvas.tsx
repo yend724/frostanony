@@ -42,7 +42,7 @@ export const FaceDetectionCanvas: React.FC<FaceDetectionCanvasProps> = ({
 
       // 顔検出結果を描画
       if (detectionResult && detectionResult.faces.length > 0) {
-        drawFaceDetections(ctx, detectionResult, originalWidth, originalHeight, originalWidth, originalHeight)
+        drawFaceDetections(ctx, detectionResult, originalWidth, originalHeight)
       }
     }
 
@@ -53,9 +53,7 @@ export const FaceDetectionCanvas: React.FC<FaceDetectionCanvasProps> = ({
     ctx: CanvasRenderingContext2D,
     result: FaceDetectionResult,
     originalWidth: number,
-    originalHeight: number,
-    canvasWidth: number,
-    canvasHeight: number
+    originalHeight: number
   ) => {
     // 元の画像と同じサイズなのでスケーリング不要
     ctx.strokeStyle = '#ef4444' // 赤色
@@ -92,8 +90,7 @@ export const FaceDetectionCanvas: React.FC<FaceDetectionCanvasProps> = ({
         <div className="p-2">
           <canvas
             ref={canvasRef}
-            className="border-none rounded-lg shadow-sm block mx-auto"
-            style={{ maxWidth: 'none', maxHeight: 'none' }}
+            className="border-none rounded-lg shadow-sm block mx-auto max-w-full h-auto"
           />
         </div>
       </div>
