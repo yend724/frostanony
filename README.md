@@ -26,7 +26,7 @@ Frostanonyは、画像内の顔を自動検出し、ぼかしやモザイクエ�
 - **言語**: TypeScript
 - **スタイリング**: Tailwind CSS + Tailwind Variants
 - **機械学習**: TensorFlow.js + MediaPipe Face Detection
-- **テスト**: Vitest + Testing Library
+- **テスト**: Vitest（純粋関数のユニットテスト）
 - **開発**: ESLint + Prettier
 
 ## 対応形式
@@ -155,23 +155,31 @@ src/
 
 ### テスト
 
+純粋関数のユニットテストのみ実装されています：
+
 ```bash
-# 全テスト実行
+# 全テスト実行（ウォッチモード）
 npm run test
 
-# 特定のテストファイル実行
-npm run test [ファイル名]
-
-# テスト結果をまとめて実行
+# テスト結果を一度だけ実行
 npm run test:run
+
+# ブラウザでテストUI表示
+npm run test:ui
 ```
+
+**テスト方針**: 
+- UIコンポーネントやReactフックのテストは不要
+- 純粋関数のロジックのみテスト対象
+- DOM依存やブラウザAPI依存のテストは除外
 
 ### コーディング規約
 
 - TypeScript strict mode
 - ESLint + Prettier による自動フォーマット
 - 関数型プログラミングスタイル
-- テスト駆動開発（TDD）
+- Feature-Sliced Design (FSD) アーキテクチャ
+- 純粋関数の単体テスト重視
 
 ## ライセンス
 

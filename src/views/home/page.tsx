@@ -42,6 +42,34 @@ const HomePage: React.FC = () => {
   
   const { toasts, showSuccess, showError, showWarning, removeToast } = useToast()
   
+  // ブラウザサポートチェック
+  useEffect(() => {
+    const checkBrowserSupport = () => {
+      const unsupportedFeatures = []
+      
+      if (!window.URL || !window.URL.createObjectURL) {
+        unsupportedFeatures.push('ファイル読み込み')
+      }
+      
+      if (!document.createElement('canvas').getContext('2d')) {
+        unsupportedFeatures.push('Canvas API')
+      }
+      
+      if (!window.WebGLRenderingContext) {
+        showWarning('WebGL がサポートされていません', '処理速度が低下する可能性があります')
+      }
+      
+      if (unsupportedFeatures.length > 0) {
+        showError(
+          `このブラウザは一部機能をサポートしていません`,
+          `非対応機能: ${unsupportedFeatures.join(', ')}`
+        )
+      }
+    }
+    
+    checkBrowserSupport()
+  }, [showError, showWarning])
+  
   // 顔検出の初期化
   useEffect(() => {
     const initializeDetection = async () => {
@@ -90,33 +118,32 @@ const HomePage: React.FC = () => {
     }
   }, [image, lastDetectionResult, selectedEffect, selectedStrength, processImage, showSuccess, showError])
   
-  // 再適用（エフェクトや強度変更時）
-  const handleReapply = useCallback(async () => {
-    if (!lastDetectionResult) return
-    
-    try {
-      await reprocessImage(lastDetectionResult, selectedEffect, selectedStrength)
-    } catch (err) {
-      console.error('再処理エラー:', err)
-      showError('エフェクトの再適用に失敗しました', '再度お試しください')
-    }
-  }, [lastDetectionResult, selectedEffect, selectedStrength, reprocessImage, showError])
   
   // エフェクト変更時の処理
-  const handleEffectChange = useCallback((effect: EffectType) => {
+  const handleEffectChange = useCallback(async (effect: EffectType) => {
     setSelectedEffect(effect)
     if (isApplied && lastDetectionResult) {
-      handleReapply()
+      try {
+        await reprocessImage(lastDetectionResult, effect, selectedStrength)
+      } catch (err) {
+        console.error('エフェクト変更時の再処理エラー:', err)
+        showError('エフェクトの変更に失敗しました', '再度お試しください')
+      }
     }
-  }, [isApplied, lastDetectionResult, handleReapply])
+  }, [isApplied, lastDetectionResult, selectedStrength, reprocessImage, showError])
   
   // 強度変更時の処理
-  const handleStrengthChange = useCallback((strength: EffectStrength) => {
+  const handleStrengthChange = useCallback(async (strength: EffectStrength) => {
     setSelectedStrength(strength)
     if (isApplied && lastDetectionResult) {
-      handleReapply()
+      try {
+        await reprocessImage(lastDetectionResult, selectedEffect, strength)
+      } catch (err) {
+        console.error('強度変更時の再処理エラー:', err)
+        showError('強度の変更に失敗しました', '再度お試しください')
+      }
     }
-  }, [isApplied, lastDetectionResult, handleReapply])
+  }, [isApplied, lastDetectionResult, selectedEffect, reprocessImage, showError])
   
   // クリア処理
   const handleClear = useCallback(() => {
@@ -129,27 +156,29 @@ const HomePage: React.FC = () => {
 
   return (
     <main className="min-h-screen bg-gradient-to-br from-orange-50 to-orange-100">
-      <div className="container mx-auto px-4 py-8">
-        <header className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-gray-900 mb-2">
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">
+        <header className="text-center mb-6 sm:mb-8">
+          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 mb-2">
             Frostanony
           </h1>
-          <p className="text-lg text-gray-600">
+          <p className="text-sm sm:text-base lg:text-lg text-gray-600 px-4 sm:px-0">
             顔画像を自動で匿名化するプライバシー保護ツール
           </p>
         </header>
         
-        <div className="grid lg:grid-cols-2 gap-8 max-w-6xl mx-auto">
+        <div className="grid lg:grid-cols-2 gap-6 lg:gap-8 max-w-7xl mx-auto">
           {/* アップロード・設定エリア */}
-          <div className="space-y-6">
+          <div className="space-y-4 sm:space-y-6">
             <ImageUpload
               onFileSelect={handleFileSelect}
               isUploading={isUploading}
               error={error}
             />
             
-            <div className="bg-white rounded-lg shadow-md p-6">
-              <h2 className="text-xl font-semibold mb-4 text-gray-900">エフェクト設定</h2>
+            <div className="bg-white rounded-lg shadow-md p-4 sm:p-6">
+              <h2 className="text-lg sm:text-xl font-semibold mb-3 sm:mb-4 text-gray-900">
+                エフェクト設定
+              </h2>
               <EffectControls
                 selectedEffect={selectedEffect}
                 selectedStrength={selectedStrength}
@@ -162,27 +191,28 @@ const HomePage: React.FC = () => {
                 onClick={handleApply}
                 disabled={!image || !lastDetectionResult || isProcessing || isDetecting}
                 className={`
-                  w-full mt-4 py-2 rounded-md transition-colors font-medium
+                  w-full mt-4 py-3 sm:py-2 rounded-md transition-colors font-medium text-sm sm:text-base
+                  touch-manipulation
                   ${image && lastDetectionResult && !isProcessing && !isDetecting
-                    ? 'bg-primary-500 text-white hover:bg-primary-600'
+                    ? 'bg-orange-500 text-white hover:bg-orange-600 active:bg-orange-700'
                     : 'bg-gray-300 text-gray-600 cursor-not-allowed'
                   }
                 `}
               >
-                {isProcessing ? '処理中...' : 
+                {isProcessing ? 'エフェクト適用中...' : 
                  isDetecting ? '顔を検出中...' :
-                 isApplied ? '再適用' : '適用'}
+                 isApplied ? 'エフェクトを再適用' : 'エフェクトを適用'}
               </button>
             </div>
           </div>
           
           {/* プレビューエリア */}
-          <div className="space-y-4">
+          <div className="space-y-4 sm:space-y-6">
             {/* 顔検出結果プレビュー */}
             {imageUrl && (
-              <div className="bg-white rounded-lg shadow-md p-4">
-                <div className="flex justify-between items-center mb-4">
-                  <h3 className="text-lg font-semibold text-gray-900">
+              <div className="bg-white rounded-lg shadow-md p-3 sm:p-4">
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-3 sm:mb-4 gap-2 sm:gap-0">
+                  <h3 className="text-base sm:text-lg font-semibold text-gray-900">
                     {lastDetectionResult 
                       ? `顔検出結果 (${lastDetectionResult.count})`
                       : '画像プレビュー'
@@ -190,7 +220,7 @@ const HomePage: React.FC = () => {
                   </h3>
                   <button
                     onClick={handleClear}
-                    className="px-4 py-2 text-sm bg-gray-500 text-white rounded-md hover:bg-gray-600 transition-colors"
+                    className="px-3 sm:px-4 py-2 text-sm bg-gray-500 text-white rounded-md hover:bg-gray-600 active:bg-gray-700 transition-colors touch-manipulation w-full sm:w-auto"
                   >
                     クリア
                   </button>
@@ -202,7 +232,7 @@ const HomePage: React.FC = () => {
                     detectionResult={lastDetectionResult}
                   />
                 ) : (
-                  <div className="overflow-auto max-h-96 border border-gray-200 rounded-lg">
+                  <div className="overflow-auto max-h-64 sm:max-h-80 lg:max-h-96 border border-gray-200 rounded-lg">
                     <div className="p-2">
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img
@@ -224,9 +254,11 @@ const HomePage: React.FC = () => {
             
             {/* 処理済み画像プレビュー */}
             {processedCanvas && (
-              <div className="bg-white rounded-lg shadow-md p-4">
-                <h3 className="text-lg font-semibold mb-2 text-gray-900">処理済み画像</h3>
-                <div className="overflow-auto max-h-96 border border-gray-200 rounded-lg">
+              <div className="bg-white rounded-lg shadow-md p-3 sm:p-4">
+                <h3 className="text-base sm:text-lg font-semibold mb-2 sm:mb-3 text-gray-900">
+                  処理済み画像
+                </h3>
+                <div className="overflow-auto max-h-64 sm:max-h-80 lg:max-h-96 border border-gray-200 rounded-lg">
                   <div className="p-2">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
@@ -236,8 +268,9 @@ const HomePage: React.FC = () => {
                     />
                   </div>
                 </div>
-                <p className="text-sm text-gray-500 mt-2 text-center">
-                  画像サイズ: {processedCanvas.width} × {processedCanvas.height}px (スクロールして全体を確認できます)
+                <p className="text-xs sm:text-sm text-gray-500 mt-2 text-center px-2">
+                  画像サイズ: {processedCanvas.width} × {processedCanvas.height}px
+                  <span className="hidden sm:inline"> (スクロールして全体を確認できます)</span>
                 </p>
                 <button
                   onClick={() => {
@@ -252,9 +285,9 @@ const HomePage: React.FC = () => {
                       showError('ダウンロードに失敗しました', '再度お試しください')
                     }
                   }}
-                  className="w-full mt-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 transition-colors font-medium"
+                  className="w-full mt-3 sm:mt-4 py-3 sm:py-2 bg-green-500 text-white rounded-md hover:bg-green-600 active:bg-green-700 transition-colors font-medium text-sm sm:text-base touch-manipulation"
                 >
-                  画像をダウンロード
+                  📱 画像をダウンロード
                 </button>
               </div>
             )}

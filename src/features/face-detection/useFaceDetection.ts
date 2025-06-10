@@ -40,7 +40,20 @@ export const useFaceDetection = (): UseFaceDetectionReturn => {
       console.log('Face detection initialization completed')
     } catch (err) {
       console.error('Face detection initialization failed:', err)
-      const errorMessage = err instanceof Error ? err.message : '顔検出の初期化に失敗しました'
+      let errorMessage = '顔検出の初期化に失敗しました'
+      
+      if (err instanceof Error) {
+        if (err.message.includes('WebGL')) {
+          errorMessage = 'WebGL が利用できません。ブラウザの設定を確認してください。'
+        } else if (err.message.includes('network') || err.message.includes('fetch')) {
+          errorMessage = 'ネットワークエラーです。インターネット接続を確認してください。'
+        } else if (err.message.includes('memory')) {
+          errorMessage = 'メモリ不足です。ブラウザのタブを閉じて再試行してください。'
+        } else {
+          errorMessage = `初期化エラー: ${err.message}`
+        }
+      }
+      
       setError(errorMessage)
     }
   }, [])
@@ -63,8 +76,23 @@ export const useFaceDetection = (): UseFaceDetectionReturn => {
       const result = await detectorRef.current.detectFaces(image)
       setLastDetectionResult(result)
       return result
-    } catch {
-      setError('顔の検出に失敗しました')
+    } catch (err) {
+      console.error('Face detection failed:', err)
+      let errorMessage = '顔の検出に失敗しました'
+      
+      if (err instanceof Error) {
+        if (err.message.includes('Invalid image')) {
+          errorMessage = '画像が無効です。別の画像ファイルを試してください。'
+        } else if (err.message.includes('memory')) {
+          errorMessage = 'メモリ不足です。より小さな画像を使用してください。'
+        } else if (err.message.includes('WebGL')) {
+          errorMessage = 'WebGLエラーです。ページを再読み込みしてください。'
+        } else {
+          errorMessage = `検出エラー: ${err.message}`
+        }
+      }
+      
+      setError(errorMessage)
       return null
     } finally {
       setIsDetecting(false)

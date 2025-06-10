@@ -12,9 +12,9 @@ Frostanonyは、画像内の顔を自動検出し、匿名化エフェクト（�
 
 - `app/` - Next.js App Routerのセットアップとグローバル設定
 - `views/` - ページレベルのコンポーネント（pagesに相当）
-- `features/` - ビジネスロジック機能（image-upload, face-detection, image-effects）
+- `features/` - ビジネスロジック機能（image-upload, face-detection, image-effects, image-processing）
 - `entities/` - コアビジネスエンティティ（顔検出モデル）
-- `shared/` - 再利用可能なユーティリティ、UIコンポーネント、設定
+- `shared/` - 再利用可能なユーティリティ、UIコンポーネント、テスト設定
 
 ### 主要なアーキテクチャ原則
 
@@ -38,11 +38,14 @@ Frostanonyは、画像内の顔を自動検出し、匿名化エフェクト（�
 # 開発サーバー起動
 npm run dev
 
-# 全テスト実行
+# 全テスト実行（ウォッチモード）
 npm run test
 
 # 特定のテストファイル実行
 npm run test [ファイル名]
+
+# テストUI起動（ブラウザベースのテスト実行環境）
+npm run test:ui
 
 # ウォッチモード無しでテスト実行
 npm run test:run
@@ -55,6 +58,9 @@ npm run lint
 
 # 本番用ビルド
 npm run build
+
+# 本番サーバー起動
+npm start
 ```
 
 ## 主要な実装詳細
@@ -85,32 +91,49 @@ npm run build
 
 ### 状態管理
 - 各機能ドメインごとのカスタムReactフック
-- useImageProcessor: 画像処理パイプライン管理
-- useFaceDetection: 顔検出機能管理
-- useImageUpload: ファイルアップロード管理
+- **useImageProcessor**: 画像処理パイプライン管理（エフェクト適用・再適用）
+- **useFaceDetection**: 顔検出機能管理（初期化・検出実行・結果管理）
+- **useImageUpload**: ファイルアップロード管理（ドラッグ&ドロップ・検証）
+- **useToast**: トースト通知システム（成功・エラー・警告メッセージ）
 - グローバル状態管理ライブラリは不要
 - 処理後の自動メモリクリーンアップ
 
 ## テスト戦略
 
-- すべてのコアビジネスロジックのユニットテスト
-- 信頼性の高いテストのためのTensorFlow.jsとCanvas APIのモック
+- **Vitest + jsdom環境** でのユニットテスト
+- **TensorFlow.js・Canvas API・ImageData** の完全モック化
+- テストセットアップファイル（`src/shared/test/setup.ts`）でグローバルモック設定
 - 顔検出、画像エフェクト、ファイルアップロード、画像処理パイプラインのテストカバレッジ
-- FaceDetectionCanvas、EffectControls、useImageProcessorの包括的テスト
+- React Testing Library使用でユーザー中心のコンポーネントテスト
 - 複数人検出シナリオのテスト（最大10人）
 - エラーハンドリングとフォールバック機能のテスト
-- 重要な機能をカバーする55以上のテスト
 
 ## セキュリティとプライバシー
 
 - **外部データ転送なし**: すべての処理はクライアントサイドで実行
 - **メモリ管理**: 処理後の画像データの自動クリーンアップ
-- **ファイル検証**: 画像タイプとサイズの厳密な検証
+- **ファイル検証**: 画像タイプとサイズの厳密な検証（最大10MB）
 - **HTTPS必須**: 本番デプロイメント用
 
-## 開発時の注意事項
+## 開発時の重要な注意事項
 
-- srcディレクトリからのインポートには`@/`パスエイリアスを使用
-- FSDインポートルールに従う：featuresはentitiesとsharedからインポート可能だが、他のfeaturesからは不可
-- すべてのCanvas操作でコンテキスト利用可能性の適切なエラーハンドリングが必要
-- TensorFlow.jsモデル読み込みは非同期で、使用前に適切に初期化する必要がある
+### TypeScript・コンパイル関連
+- **TensorFlow.js API制限**: `staticImageMode`、`score`プロパティは型定義に存在しないため使用不可
+- **Map型の明示的指定**: `Map<EffectType, ImageEffect>`のようにジェネリクス型を明示
+- **ImageDataポリフィル**: テスト環境で`colorSpace`プロパティとコンストラクタオーバーロードが必須
+
+### アーキテクチャ・インポート
+- `@/`パスエイリアス使用（tsconfig.jsonで設定済み）
+- **FSD依存関係ルール**: featuresは他のfeaturesに依存不可、entitiesとsharedのみ依存可能
+- 各layerは`index.ts`でbarrel exportsを提供
+
+### Canvas・画像処理
+- Canvas操作前の必須nullチェック（`getContext('2d')`）
+- TensorFlow.jsモデルは非同期初期化必須
+- レスポンシブ対応のため`max-w-full h-auto`クラス使用
+- 動的画像表示で`next/image`警告がある場合はESLint無効化コメント使用
+
+### エラーハンドリング
+- 未使用のcatch変数は削除（`catch {}`）
+- `any`型は適切な型に置換
+- 戻り値の一貫性確保（例：`Promise<T | null>`）

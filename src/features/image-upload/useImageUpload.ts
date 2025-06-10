@@ -19,12 +19,21 @@ export const useImageUpload = (): UseImageUploadReturn => {
   const [error, setError] = useState<string | null>(null)
 
   const validateFile = useCallback((file: File): string | null => {
+    if (!file) {
+      return 'ファイルが選択されていません。'
+    }
+    
+    if (file.size === 0) {
+      return 'ファイルが空です。有効な画像ファイルを選択してください。'
+    }
+    
     if (!ACCEPTED_TYPES.includes(file.type)) {
-      return '対応していないファイル形式です。JPEG、PNG、WebPファイルを選択してください。'
+      return `対応していないファイル形式です（${file.type}）。JPEG、PNG、WebPファイルを選択してください。`
     }
     
     if (file.size > MAX_FILE_SIZE) {
-      return 'ファイルサイズが大きすぎます。10MB以下のファイルを選択してください。'
+      const sizeMB = Math.round(file.size / (1024 * 1024) * 10) / 10
+      return `ファイルサイズが大きすぎます（${sizeMB}MB）。10MB以下のファイルを選択してください。`
     }
     
     return null
@@ -47,11 +56,17 @@ export const useImageUpload = (): UseImageUploadReturn => {
         URL.revokeObjectURL(imageUrl)
       }
 
+      // ブラウザサポートチェック
+      if (!window.URL || !window.URL.createObjectURL) {
+        throw new Error('このブラウザではファイル読み込み機能がサポートされていません。')
+      }
+
       const url = URL.createObjectURL(file)
       setImage(file)
       setImageUrl(url)
-    } catch {
-      setError('ファイルの読み込みに失敗しました。')
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'ファイルの読み込みに失敗しました。'
+      setError(errorMessage)
     } finally {
       setIsUploading(false)
     }

@@ -66,8 +66,22 @@ export const useImageProcessor = (): UseImageProcessorReturn => {
 
       setProcessedCanvas(result)
     } catch (err) {
-      setError('画像の処理に失敗しました')
-      console.error(err)
+      console.error('Image processing failed:', err)
+      let errorMessage = '画像の処理に失敗しました'
+      
+      if (err instanceof Error) {
+        if (err.message.includes('Canvas context')) {
+          errorMessage = 'Canvas の初期化に失敗しました。ブラウザを再起動してください。'
+        } else if (err.message.includes('memory')) {
+          errorMessage = 'メモリ不足です。より小さな画像を使用してください。'
+        } else if (err.message.includes('Invalid image')) {
+          errorMessage = '画像データが無効です。別の画像を試してください。'
+        } else {
+          errorMessage = `処理エラー: ${err.message}`
+        }
+      }
+      
+      setError(errorMessage)
     } finally {
       setIsProcessing(false)
     }
@@ -107,8 +121,22 @@ export const useImageProcessor = (): UseImageProcessorReturn => {
 
       setProcessedCanvas(result)
     } catch (err) {
-      setError('画像の処理に失敗しました')
-      console.error(err)
+      console.error('Image processing failed:', err)
+      let errorMessage = '画像の処理に失敗しました'
+      
+      if (err instanceof Error) {
+        if (err.message.includes('Canvas context')) {
+          errorMessage = 'Canvas の初期化に失敗しました。ブラウザを再起動してください。'
+        } else if (err.message.includes('memory')) {
+          errorMessage = 'メモリ不足です。より小さな画像を使用してください。'
+        } else if (err.message.includes('Invalid image')) {
+          errorMessage = '画像データが無効です。別の画像を試してください。'
+        } else {
+          errorMessage = `処理エラー: ${err.message}`
+        }
+      }
+      
+      setError(errorMessage)
     } finally {
       setIsProcessing(false)
     }

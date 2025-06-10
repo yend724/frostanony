@@ -30,11 +30,11 @@ export const EffectControls: React.FC<EffectControlsProps> = ({
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 sm:space-y-5">
       <div>
-        <p className="font-medium mb-2 text-gray-800">エフェクトの種類</p>
-        <div className="space-y-2">
-          <label className="flex items-center text-gray-700 cursor-pointer">
+        <p className="font-medium mb-3 text-gray-800 text-sm sm:text-base">エフェクトの種類</p>
+        <div className="grid grid-cols-2 gap-3 sm:flex sm:space-x-6 sm:gap-0">
+          <label className="flex items-center justify-center text-gray-700 cursor-pointer p-3 sm:p-2 bg-gray-50 sm:bg-transparent rounded-lg sm:rounded-none border sm:border-none transition-colors hover:bg-gray-100 sm:hover:bg-transparent touch-manipulation">
             <input
               type="radio"
               name="effect"
@@ -42,11 +42,11 @@ export const EffectControls: React.FC<EffectControlsProps> = ({
               checked={selectedEffect === EffectType.BLUR}
               onChange={() => onEffectChange(EffectType.BLUR)}
               disabled={disabled}
-              className="mr-2 text-primary-500 focus:ring-primary-500"
+              className="mr-2 text-orange-500 focus:ring-orange-500 w-4 h-4 sm:w-auto sm:h-auto"
             />
-            ぼかし
+            <span className="text-sm sm:text-base">🌫️ ぼかし</span>
           </label>
-          <label className="flex items-center text-gray-700 cursor-pointer">
+          <label className="flex items-center justify-center text-gray-700 cursor-pointer p-3 sm:p-2 bg-gray-50 sm:bg-transparent rounded-lg sm:rounded-none border sm:border-none transition-colors hover:bg-gray-100 sm:hover:bg-transparent touch-manipulation">
             <input
               type="radio"
               name="effect"
@@ -54,31 +54,34 @@ export const EffectControls: React.FC<EffectControlsProps> = ({
               checked={selectedEffect === EffectType.MOSAIC}
               onChange={() => onEffectChange(EffectType.MOSAIC)}
               disabled={disabled}
-              className="mr-2 text-primary-500 focus:ring-primary-500"
+              className="mr-2 text-orange-500 focus:ring-orange-500 w-4 h-4 sm:w-auto sm:h-auto"
             />
-            モザイク
+            <span className="text-sm sm:text-base">🧩 モザイク</span>
           </label>
         </div>
       </div>
 
       <div>
-        <p className="font-medium mb-2 text-gray-800">強度</p>
-        <input
-          type="range"
-          min="1"
-          max="5"
-          value={selectedStrength}
-          onChange={handleStrengthChange}
-          disabled={disabled}
-          className="w-full accent-primary-500"
-          aria-label="強度"
-        />
-        <div className="flex justify-between text-sm text-gray-800 mt-1 font-medium">
-          <span>弱</span>
-          <span>強</span>
+        <p className="font-medium mb-3 text-gray-800 text-sm sm:text-base">強度</p>
+        <div className="px-2">
+          <input
+            type="range"
+            min="1"
+            max="5"
+            value={selectedStrength}
+            onChange={handleStrengthChange}
+            disabled={disabled}
+            className="w-full h-2 sm:h-auto accent-orange-500 cursor-pointer touch-manipulation"
+            aria-label="強度"
+            style={{ touchAction: 'pan-x' }}
+          />
+          <div className="flex justify-between text-xs sm:text-sm text-gray-800 mt-2 font-medium">
+            <span>弱</span>
+            <span>強</span>
+          </div>
         </div>
-        <div className="text-center mt-2">
-          <span className="text-sm text-gray-600 bg-gray-100 px-3 py-1 rounded-full">
+        <div className="text-center mt-3">
+          <span className="text-sm sm:text-base text-gray-600 bg-orange-50 border border-orange-200 px-4 py-2 rounded-full font-medium">
             {strengthLabels[selectedStrength]}
           </span>
         </div>
