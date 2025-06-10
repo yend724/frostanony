@@ -1,14 +1,16 @@
 export const imageToCanvas = (image: HTMLImageElement): HTMLCanvasElement => {
   const canvas = document.createElement('canvas')
-  canvas.width = image.width
-  canvas.height = image.height
+  // naturalWidth/naturalHeightを使用して元の画像サイズを保持
+  canvas.width = image.naturalWidth || image.width
+  canvas.height = image.naturalHeight || image.height
   
   const ctx = canvas.getContext('2d')
   if (!ctx) {
     throw new Error('Canvas context could not be created')
   }
   
-  ctx.drawImage(image, 0, 0)
+  // 元の画像サイズでキャンバスに描画
+  ctx.drawImage(image, 0, 0, canvas.width, canvas.height)
   return canvas
 }
 

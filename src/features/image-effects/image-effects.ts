@@ -63,11 +63,11 @@ export class BlurEffect implements ImageEffect {
 export class MosaicEffect implements ImageEffect {
   getPixelSize(strength: EffectStrength): number {
     const pixelSizeMap: Record<EffectStrength, number> = {
-      [EffectStrength.WEAK]: 4,
-      [EffectStrength.LIGHT]: 8,
-      [EffectStrength.MEDIUM]: 12,
-      [EffectStrength.STRONG]: 16,
-      [EffectStrength.VERY_STRONG]: 20,
+      [EffectStrength.WEAK]: 8,
+      [EffectStrength.LIGHT]: 12,
+      [EffectStrength.MEDIUM]: 16,
+      [EffectStrength.STRONG]: 24,
+      [EffectStrength.VERY_STRONG]: 32,
     }
     return pixelSizeMap[strength]
   }
@@ -85,45 +85,60 @@ export class MosaicEffect implements ImageEffect {
     const pixelSize = this.getPixelSize(strength)
 
     for (const face of faces) {
+      // 顔領域の境界を確実に設定
+      const startX = Math.max(0, Math.floor(face.x))
+      const startY = Math.max(0, Math.floor(face.y))
+      const endX = Math.min(canvas.width, Math.ceil(face.x + face.width))
+      const endY = Math.min(canvas.height, Math.ceil(face.y + face.height))
+      const faceWidth = endX - startX
+      const faceHeight = endY - startY
+
+      if (faceWidth <= 0 || faceHeight <= 0) continue
+
       // 顔領域の画像データを取得
-      const imageData = ctx.getImageData(face.x, face.y, face.width, face.height)
+      const imageData = ctx.getImageData(startX, startY, faceWidth, faceHeight)
       const data = imageData.data
 
-      // モザイク処理
-      for (let y = 0; y < face.height; y += pixelSize) {
-        for (let x = 0; x < face.width; x += pixelSize) {
+      // モザイク処理 - より効果的なアルゴリズム
+      for (let y = 0; y < faceHeight; y += pixelSize) {
+        for (let x = 0; x < faceWidth; x += pixelSize) {
           // ピクセルブロックの平均色を計算
-          let r = 0, g = 0, b = 0, a = 0
+          let r = 0, g = 0, b = 0, alpha = 0
           let count = 0
 
-          for (let dy = 0; dy < pixelSize && y + dy < face.height; dy++) {
-            for (let dx = 0; dx < pixelSize && x + dx < face.width; dx++) {
-              const index = ((y + dy) * face.width + (x + dx)) * 4
-              if (index < data.length) {
+          // ブロック内の全ピクセルの色を平均化
+          const blockEndY = Math.min(y + pixelSize, faceHeight)
+          const blockEndX = Math.min(x + pixelSize, faceWidth)
+
+          for (let dy = y; dy < blockEndY; dy++) {
+            for (let dx = x; dx < blockEndX; dx++) {
+              const index = (dy * faceWidth + dx) * 4
+              if (index + 3 < data.length) {
                 r += data[index]
                 g += data[index + 1]
                 b += data[index + 2]
-                a += data[index + 3]
+                alpha += data[index + 3]
                 count++
               }
             }
           }
 
           if (count > 0) {
-            r = Math.floor(r / count)
-            g = Math.floor(g / count)
-            b = Math.floor(b / count)
-            a = Math.floor(a / count)
+            // 平均色を計算
+            const avgR = Math.round(r / count)
+            const avgG = Math.round(g / count)
+            const avgB = Math.round(b / count)
+            const avgA = Math.round(alpha / count)
 
-            // ピクセルブロック全体を平均色で塗りつぶし
-            for (let dy = 0; dy < pixelSize && y + dy < face.height; dy++) {
-              for (let dx = 0; dx < pixelSize && x + dx < face.width; dx++) {
-                const index = ((y + dy) * face.width + (x + dx)) * 4
-                if (index < data.length) {
-                  data[index] = r
-                  data[index + 1] = g
-                  data[index + 2] = b
-                  data[index + 3] = a
+            // ブロック全体を平均色で塗りつぶし
+            for (let dy = y; dy < blockEndY; dy++) {
+              for (let dx = x; dx < blockEndX; dx++) {
+                const index = (dy * faceWidth + dx) * 4
+                if (index + 3 < data.length) {
+                  data[index] = avgR
+                  data[index + 1] = avgG
+                  data[index + 2] = avgB
+                  data[index + 3] = avgA
                 }
               }
             }
@@ -132,7 +147,7 @@ export class MosaicEffect implements ImageEffect {
       }
 
       // 処理済み画像データをキャンバスに描画
-      ctx.putImageData(imageData, face.x, face.y)
+      ctx.putImageData(imageData, startX, startY)
     }
 
     return canvas

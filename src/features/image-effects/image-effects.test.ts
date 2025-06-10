@@ -92,11 +92,11 @@ describe('MosaicEffect', () => {
 
   describe('getPixelSize', () => {
     it('強度に応じて適切なピクセルサイズを返す', () => {
-      expect(mosaicEffect.getPixelSize(EffectStrength.WEAK)).toBe(4)
-      expect(mosaicEffect.getPixelSize(EffectStrength.LIGHT)).toBe(8)
-      expect(mosaicEffect.getPixelSize(EffectStrength.MEDIUM)).toBe(12)
-      expect(mosaicEffect.getPixelSize(EffectStrength.STRONG)).toBe(16)
-      expect(mosaicEffect.getPixelSize(EffectStrength.VERY_STRONG)).toBe(20)
+      expect(mosaicEffect.getPixelSize(EffectStrength.WEAK)).toBe(8)
+      expect(mosaicEffect.getPixelSize(EffectStrength.LIGHT)).toBe(12)
+      expect(mosaicEffect.getPixelSize(EffectStrength.MEDIUM)).toBe(16)
+      expect(mosaicEffect.getPixelSize(EffectStrength.STRONG)).toBe(24)
+      expect(mosaicEffect.getPixelSize(EffectStrength.VERY_STRONG)).toBe(32)
     })
   })
 

@@ -179,11 +179,11 @@ const HomePage: React.FC = () => {
                   />
                 ) : (
                   <div className="overflow-auto max-h-96 border border-gray-200 rounded-lg">
-                    <div className="flex justify-center p-2">
+                    <div className="p-2">
                       <img
                         src={imageUrl}
                         alt="アップロード画像"
-                        className="border-none rounded-lg shadow-sm"
+                        className="border-none rounded-lg shadow-sm block mx-auto"
                         style={{ maxWidth: 'none', maxHeight: 'none' }}
                         onLoad={(e) => {
                           const img = e.target as HTMLImageElement
@@ -203,11 +203,11 @@ const HomePage: React.FC = () => {
               <div className="bg-white rounded-lg shadow-md p-4">
                 <h3 className="text-lg font-semibold mb-2 text-gray-900">処理済み画像</h3>
                 <div className="overflow-auto max-h-96 border border-gray-200 rounded-lg">
-                  <div className="flex justify-center p-2">
+                  <div className="p-2">
                     <img
                       src={processedCanvas.toDataURL()}
                       alt="処理済み画像"
-                      className="border-none rounded-lg shadow-sm"
+                      className="border-none rounded-lg shadow-sm block mx-auto"
                       style={{ maxWidth: 'none', maxHeight: 'none' }}
                     />
                   </div>

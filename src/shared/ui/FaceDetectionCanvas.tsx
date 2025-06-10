@@ -28,28 +28,21 @@ export const FaceDetectionCanvas: React.FC<FaceDetectionCanvasProps> = ({
 
     const image = new Image()
     image.onload = () => {
-      // キャンバスサイズを画像に合わせて調整
-      const aspectRatio = image.width / image.height
-      let canvasWidth = width
-      let canvasHeight = height
+      // 元の画像サイズを使用
+      const originalWidth = image.naturalWidth || image.width
+      const originalHeight = image.naturalHeight || image.height
+      
+      canvas.width = originalWidth
+      canvas.height = originalHeight
+      setImageSize({ width: originalWidth, height: originalHeight })
 
-      if (aspectRatio > width / height) {
-        canvasHeight = width / aspectRatio
-      } else {
-        canvasWidth = height * aspectRatio
-      }
-
-      canvas.width = canvasWidth
-      canvas.height = canvasHeight
-      setImageSize({ width: canvasWidth, height: canvasHeight })
-
-      // 画像を描画
-      ctx.clearRect(0, 0, canvasWidth, canvasHeight)
-      ctx.drawImage(image, 0, 0, canvasWidth, canvasHeight)
+      // 画像を元のサイズで描画
+      ctx.clearRect(0, 0, originalWidth, originalHeight)
+      ctx.drawImage(image, 0, 0, originalWidth, originalHeight)
 
       // 顔検出結果を描画
       if (detectionResult && detectionResult.faces.length > 0) {
-        drawFaceDetections(ctx, detectionResult, image.width, image.height, canvasWidth, canvasHeight)
+        drawFaceDetections(ctx, detectionResult, originalWidth, originalHeight, originalWidth, originalHeight)
       }
     }
 
@@ -64,20 +57,17 @@ export const FaceDetectionCanvas: React.FC<FaceDetectionCanvasProps> = ({
     canvasWidth: number,
     canvasHeight: number
   ) => {
-    // スケール比率を計算
-    const scaleX = canvasWidth / originalWidth
-    const scaleY = canvasHeight / originalHeight
-
+    // 元の画像と同じサイズなのでスケーリング不要
     ctx.strokeStyle = '#ef4444' // 赤色
-    ctx.lineWidth = 3
+    ctx.lineWidth = Math.max(2, Math.min(originalWidth, originalHeight) / 200) // 画像サイズに応じた線幅
     ctx.fillStyle = '#ef4444' // 赤色（テキスト用）
 
     result.faces.forEach((face) => {
-      // バウンディングボックスをキャンバス座標に変換
-      const x = face.x * scaleX
-      const y = face.y * scaleY
-      const faceWidth = face.width * scaleX
-      const faceHeight = face.height * scaleY
+      // 顔のバウンディングボックス
+      const x = face.x
+      const y = face.y
+      const faceWidth = face.width
+      const faceHeight = face.height
 
       // 円を描画（顔を囲む）- 枠のみ
       const centerX = x + faceWidth / 2
@@ -88,9 +78,10 @@ export const FaceDetectionCanvas: React.FC<FaceDetectionCanvasProps> = ({
       ctx.arc(centerX, centerY, radius, 0, 2 * Math.PI)
       ctx.stroke() // 塗りつぶしを削除、枠のみ
 
-      // 顔番号を描画
+      // 顔番号を描画（画像サイズに応じたフォントサイズ）
+      const fontSize = Math.max(12, Math.min(originalWidth, originalHeight) / 50)
       ctx.fillStyle = '#ef4444'
-      ctx.font = '16px sans-serif'
+      ctx.font = `${fontSize}px sans-serif`
       ctx.fillText(`顔 ${result.faces.indexOf(face) + 1}`, x, y - 5)
     })
   }
@@ -98,10 +89,10 @@ export const FaceDetectionCanvas: React.FC<FaceDetectionCanvasProps> = ({
   return (
     <div className={`w-full ${className}`}>
       <div className="overflow-auto max-h-96 border border-gray-200 rounded-lg">
-        <div className="flex justify-center p-2">
+        <div className="p-2">
           <canvas
             ref={canvasRef}
-            className="border-none rounded-lg shadow-sm"
+            className="border-none rounded-lg shadow-sm block mx-auto"
             style={{ maxWidth: 'none', maxHeight: 'none' }}
           />
         </div>

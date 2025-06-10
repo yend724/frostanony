@@ -59,8 +59,10 @@ describe('image-utils', () => {
   describe('imageToCanvas', () => {
     it('画像をCanvasに描画する', () => {
       const mockImage = {
-        width: 800,
-        height: 600,
+        width: 400,
+        height: 300,
+        naturalWidth: 800,
+        naturalHeight: 600,
       } as HTMLImageElement
 
       const canvas = imageToCanvas(mockImage)
@@ -68,7 +70,7 @@ describe('image-utils', () => {
       expect(document.createElement).toHaveBeenCalledWith('canvas')
       expect(canvas.width).toBe(800)
       expect(canvas.height).toBe(600)
-      expect(mockContext.drawImage).toHaveBeenCalledWith(mockImage, 0, 0)
+      expect(mockContext.drawImage).toHaveBeenCalledWith(mockImage, 0, 0, 800, 600)
     })
 
     it('getContextがnullの場合はエラーを投げる', () => {
