@@ -91,7 +91,7 @@ describe('useImageProcessor', () => {
   it('should handle processing error', async () => {
     // ImageEffectProcessorのapplyEffectメソッドがエラーを投げるようにモック
     const { ImageEffectProcessor } = await import('@/features/image-effects')
-    const mockProcessor = new (ImageEffectProcessor as any)()
+    const mockProcessor = new (ImageEffectProcessor as typeof ImageEffectProcessor)()
     mockProcessor.applyEffect.mockRejectedValue(new Error('Processing failed'))
 
     const { result } = renderHook(() => useImageProcessor())

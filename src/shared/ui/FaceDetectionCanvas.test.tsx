@@ -49,7 +49,7 @@ describe('FaceDetectionCanvas', () => {
           }
         }, 0)
       }
-    } as any
+    } as HTMLCanvasElement
   })
 
   it('should render canvas element', () => {

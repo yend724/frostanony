@@ -158,7 +158,7 @@ export class ImageEffectProcessor {
   private effects: Map<EffectType, ImageEffect>
 
   constructor() {
-    this.effects = new Map([
+    this.effects = new Map<EffectType, ImageEffect>([
       [EffectType.BLUR, new BlurEffect()],
       [EffectType.MOSAIC, new MosaicEffect()],
     ])

@@ -106,16 +106,10 @@ export class FaceDetector {
       // 高精度検出のための設定
       const predictions = await this.detector.estimateFaces(image, {
         flipHorizontal: false,
-        staticImageMode: true, // 静止画モードで精度向上
       })
       
-      // 信頼度フィルタリング（0.5以上の検出結果のみ採用）
+      // バウンディングボックスサイズによるフィルタリング
       const filteredPredictions = predictions.filter(prediction => {
-        // prediction.scoresが存在する場合のみフィルタリング
-        if (prediction.score !== undefined) {
-          return prediction.score > 0.5
-        }
-        // スコアが無い場合は、バウンディングボックスのサイズで判定
         const area = prediction.box.width * prediction.box.height
         const imageArea = this.getImageArea(image)
         const relativeSize = area / imageArea

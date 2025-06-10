@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
-import { FaceDetector, FaceDetectionResult } from './face-detection'
+import { FaceDetector } from './face-detection'
 import * as faceDetection from '@tensorflow-models/face-detection'
 
 // TensorFlow.jsのモック
@@ -19,7 +19,7 @@ vi.mock('@tensorflow-models/face-detection', () => ({
 
 describe('FaceDetector', () => {
   let faceDetector: FaceDetector
-  let mockDetector: any
+  let mockDetector: unknown
 
   beforeEach(() => {
     // モックデータを作成

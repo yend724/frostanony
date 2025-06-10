@@ -204,6 +204,7 @@ const HomePage: React.FC = () => {
                 ) : (
                   <div className="overflow-auto max-h-96 border border-gray-200 rounded-lg">
                     <div className="p-2">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img
                         src={imageUrl}
                         alt="アップロード画像"
@@ -227,6 +228,7 @@ const HomePage: React.FC = () => {
                 <h3 className="text-lg font-semibold mb-2 text-gray-900">処理済み画像</h3>
                 <div className="overflow-auto max-h-96 border border-gray-200 rounded-lg">
                   <div className="p-2">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
                       src={processedCanvas.toDataURL()}
                       alt="処理済み画像"

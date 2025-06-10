@@ -63,7 +63,7 @@ export const useFaceDetection = (): UseFaceDetectionReturn => {
       const result = await detectorRef.current.detectFaces(image)
       setLastDetectionResult(result)
       return result
-    } catch (err) {
+    } catch {
       setError('顔の検出に失敗しました')
       return null
     } finally {

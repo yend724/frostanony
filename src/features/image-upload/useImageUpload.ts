@@ -50,7 +50,7 @@ export const useImageUpload = (): UseImageUploadReturn => {
       const url = URL.createObjectURL(file)
       setImage(file)
       setImageUrl(url)
-    } catch (err) {
+    } catch {
       setError('ファイルの読み込みに失敗しました。')
     } finally {
       setIsUploading(false)

@@ -16,7 +16,12 @@ vi.mock('@/entities/face', () => {
 })
 
 describe('useFaceDetection', () => {
-  let mockFaceDetector: any
+  let mockFaceDetector: {
+    initialize: ReturnType<typeof vi.fn>
+    detectFaces: ReturnType<typeof vi.fn>
+    isInitialized: ReturnType<typeof vi.fn>
+    dispose: ReturnType<typeof vi.fn>
+  }
 
   beforeEach(() => {
     mockFaceDetector = {
@@ -86,7 +91,7 @@ describe('useFaceDetection', () => {
     })
 
     it('検出中はisDetectingがtrueになる', async () => {
-      let resolveDetection: (value: any) => void
+      let resolveDetection: (value: unknown) => void
       const detectionPromise = new Promise((resolve) => {
         resolveDetection = resolve
       })
