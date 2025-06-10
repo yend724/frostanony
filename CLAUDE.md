@@ -8,7 +8,7 @@ Frostanonyは、画像内の顔を自動検出し、匿名化エフェクト（�
 
 ## アーキテクチャ
 
-このプロジェクトは**Feature-Sliced Design (FSD)**アーキテクチャに従っています：
+このプロジェクトは**Feature-Sliced Design (FSD)**アーキテクチャにしたがっています：
 
 - `app/` - Next.js App Routerのセットアップとグローバル設定
 - `views/` - ページレベルのコンポーネント（pagesに相当）
@@ -21,7 +21,7 @@ Frostanonyは、画像内の顔を自動検出し、匿名化エフェクト（�
 - **Package by Feature**: 技術レイヤーではなく、ビジネス機能によるコード整理
 - **単方向依存**: 上位レイヤーは下位レイヤーにのみ依存可能
 - **Barrel Exports**: 各feature/entityはindex.tsファイルを通じてエクスポート
-- **テスト駆動開発**: すべてのコア機能に包括的なテストカバレッジ
+- **純粋関数テスト**: 複雑なUIテストを避け、純粋関数のロジックのみテスト
 
 ## 主要技術
 
@@ -29,7 +29,7 @@ Frostanonyは、画像内の顔を自動検出し、匿名化エフェクト（�
 - **TypeScript** strict modeでの型安全性
 - **TensorFlow.js** MediaPipe Face Detectionによるブラウザベースの機械学習
 - **Tailwind CSS** + Tailwind Variantsによるスタイリング
-- **Vitest** + Testing Libraryによるユニットテスト
+- **Vitest** 純粋関数のユニットテスト
 - **Canvas API** 画像処理とエフェクト適用
 
 ## 開発コマンド
@@ -68,8 +68,8 @@ npm start
 ### 顔検出パイプライン
 1. 画像アップロード時の自動顔検出実行
 2. TensorFlow.js + MediaPipeを使用した複数人対応顔検出（最大10人）
-3. WebGL → CPU バックエンドフォールバック機能
-4. MediaPipe → TensorFlow.js ランタイムフォールバック機能
+3. WebGL→CPUバックエンドフォールバック機能
+4. MediaPipe→TensorFlow.jsランタイムフォールバック機能
 5. 検出された顔を赤枠で視覚的表示（番号付き識別）
 6. 検出結果に基づくCanvas APIでのエフェクト適用
 7. 外部API呼び出しなし - プライバシーファーストアーキテクチャ
@@ -77,7 +77,8 @@ npm start
 ### エフェクトシステム
 - **BlurEffect**: 設定可能なぼかし半径でCanvas filter APIを使用
 - **MosaicEffect**: 設定可能なブロックサイズでピクセル平均化アルゴリズム
-- **強度レベル**: 5段階システム（WEAK=1 から VERY_STRONG=5）
+- **強度レベル**: 5段階システム（WEAK=1からVERY_STRONG=5）
+- **デバウンス再適用**: 強度変更時に300msのデバウンスで処理重複を防止
 - **リアルタイム再適用**: エフェクト・強度変更時の即座な再処理
 - **複数人同時処理**: 検出されたすべての顔に一括エフェクト適用
 - エフェクトは検出された顔のバウンディングボックスにのみ適用
@@ -100,13 +101,12 @@ npm start
 
 ## テスト戦略
 
-- **Vitest + jsdom環境** でのユニットテスト
-- **TensorFlow.js・Canvas API・ImageData** の完全モック化
-- テストセットアップファイル（`src/shared/test/setup.ts`）でグローバルモック設定
-- 顔検出、画像エフェクト、ファイルアップロード、画像処理パイプラインのテストカバレッジ
-- React Testing Library使用でユーザー中心のコンポーネントテスト
-- 複数人検出シナリオのテスト（最大10人）
-- エラーハンドリングとフォールバック機能のテスト
+**純粋関数のユニットテストのみを実装する方針：**
+- **Vitest** でのシンプルなユニットテスト
+- UIコンポーネントやReactフックのテストは除外
+- DOM依存・ブラウザAPI依存のテストは実装しない
+- 複雑なモックではなく、純粋関数のロジックのみをテスト
+- `src/shared/lib/image-utils.test.ts`が現在唯一のテストファイル
 
 ## セキュリティとプライバシー
 
@@ -120,7 +120,7 @@ npm start
 ### TypeScript・コンパイル関連
 - **TensorFlow.js API制限**: `staticImageMode`、`score`プロパティは型定義に存在しないため使用不可
 - **Map型の明示的指定**: `Map<EffectType, ImageEffect>`のようにジェネリクス型を明示
-- **ImageDataポリフィル**: テスト環境で`colorSpace`プロパティとコンストラクタオーバーロードが必須
+- **Node.js.Timeout型**: デバウンス処理でのタイムアウト管理に使用
 
 ### アーキテクチャ・インポート
 - `@/`パスエイリアス使用（tsconfig.jsonで設定済み）
@@ -133,7 +133,9 @@ npm start
 - レスポンシブ対応のため`max-w-full h-auto`クラス使用
 - 動的画像表示で`next/image`警告がある場合はESLint無効化コメント使用
 
-### エラーハンドリング
+### エラーハンドリング・メモリ管理
 - 未使用のcatch変数は削除（`catch {}`）
 - `any`型は適切な型に置換
 - 戻り値の一貫性確保（例：`Promise<T | null>`）
+- **タイムアウトクリーンアップ**: useEffect cleanup関数でclearTimeoutを確実に実行
+- **デバウンス管理**: 連続する処理呼び出し時の重複防止とメモリリーク防止
