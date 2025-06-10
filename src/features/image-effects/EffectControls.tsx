@@ -68,12 +68,18 @@ export const EffectControls: React.FC<EffectControlsProps> = ({
             type="range"
             min="1"
             max="5"
+            step="1"
             value={selectedStrength}
             onChange={handleStrengthChange}
             disabled={disabled}
-            className="w-full h-2 sm:h-auto accent-orange-500 cursor-pointer touch-manipulation"
+            className="w-full h-3 sm:h-auto accent-orange-500 cursor-pointer touch-manipulation bg-orange-100 rounded-lg appearance-none 
+                     hover:accent-orange-600 focus:accent-orange-600 focus:outline-none focus:ring-2 focus:ring-orange-300
+                     disabled:opacity-50 disabled:cursor-not-allowed"
             aria-label="強度"
-            style={{ touchAction: 'pan-x' }}
+            style={{ 
+              touchAction: 'pan-x',
+              background: `linear-gradient(to right, #fb923c 0%, #fb923c ${((selectedStrength - 1) / 4) * 100}%, #fed7aa ${((selectedStrength - 1) / 4) * 100}%, #fed7aa 100%)`
+            }}
           />
           <div className="flex justify-between text-xs sm:text-sm text-gray-800 mt-2 font-medium">
             <span>弱</span>

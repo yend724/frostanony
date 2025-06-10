@@ -132,25 +132,53 @@ const HomePage: React.FC = () => {
     }
   }, [isApplied, lastDetectionResult, selectedStrength, reprocessImage, showError])
   
-  // 強度変更時の処理
+  // 強度変更時の処理（デバウンス付き）
+  const [strengthChangeTimeout, setStrengthChangeTimeout] = useState<NodeJS.Timeout | null>(null)
+  
   const handleStrengthChange = useCallback(async (strength: EffectStrength) => {
     setSelectedStrength(strength)
-    if (isApplied && lastDetectionResult) {
-      try {
-        await reprocessImage(lastDetectionResult, selectedEffect, strength)
-      } catch (err) {
-        console.error('強度変更時の再処理エラー:', err)
-        showError('強度の変更に失敗しました', '再度お試しください')
-      }
+    
+    // 既存のタイムアウトをクリア
+    if (strengthChangeTimeout) {
+      clearTimeout(strengthChangeTimeout)
     }
-  }, [isApplied, lastDetectionResult, selectedEffect, reprocessImage, showError])
+    
+    if (isApplied && lastDetectionResult) {
+      // デバウンス：300ms後に処理実行
+      const timeoutId = setTimeout(async () => {
+        try {
+          await reprocessImage(lastDetectionResult, selectedEffect, strength)
+        } catch (err) {
+          console.error('強度変更時の再処理エラー:', err)
+          showError('強度の変更に失敗しました', '再度お試しください')
+        }
+      }, 300)
+      
+      setStrengthChangeTimeout(timeoutId)
+    }
+  }, [isApplied, lastDetectionResult, selectedEffect, reprocessImage, showError, strengthChangeTimeout])
   
   // クリア処理
   const handleClear = useCallback(() => {
+    // 進行中のタイムアウトをクリア
+    if (strengthChangeTimeout) {
+      clearTimeout(strengthChangeTimeout)
+      setStrengthChangeTimeout(null)
+    }
+    
     clearImage()
     resetProcessor()
     setIsApplied(false)
-  }, [clearImage, resetProcessor])
+  }, [clearImage, resetProcessor, strengthChangeTimeout])
+  
+  // コンポーネントのクリーンアップ
+  useEffect(() => {
+    return () => {
+      if (strengthChangeTimeout) {
+        clearTimeout(strengthChangeTimeout)
+      }
+    }
+  }, [strengthChangeTimeout])
   
   const error = uploadError || detectionError || processingError
 
