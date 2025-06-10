@@ -22,24 +22,65 @@ export class FaceDetector {
       return
     }
 
-    try {
-      // TensorFlow.jsの準備
-      await tf.ready()
-      await tf.setBackend('webgl')
+    // ブラウザ環境チェック
+    if (typeof window === 'undefined') {
+      throw new Error('Face detection can only be initialized in browser environment')
+    }
 
-      // Face Detection モデルの初期化
+    try {
+      // タイムアウト付きの初期化
+      const initPromise = this.initializeInternal()
+      const timeoutPromise = new Promise<never>((_, reject) => {
+        setTimeout(() => reject(new Error('Face detection initialization timeout (30s)')), 30000)
+      })
+
+      await Promise.race([initPromise, timeoutPromise])
+    } catch (error) {
+      console.error('Face detection initialization error:', error)
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+      throw new Error(`Face detection model initialization failed: ${errorMessage}`)
+    }
+  }
+
+  private async initializeInternal(): Promise<void> {
+    // TensorFlow.jsの準備
+    await tf.ready()
+
+    // WebGLバックエンドを試行、失敗時はCPUにフォールバック
+    try {
+      await tf.setBackend('webgl')
+      console.log('Face detection: WebGL backend initialized')
+    } catch (webglError) {
+      console.warn('Face detection: WebGL backend failed, falling back to CPU:', webglError)
+      await tf.setBackend('cpu')
+    }
+
+    // Face Detection モデルの初期化（複数人検出向け設定）
+    try {
       this.detector = await faceDetection.createDetector(
         faceDetection.SupportedModels.MediaPipeFaceDetector,
         {
           runtime: 'mediapipe',
-          solutionPath: 'https://cdn.jsdelivr.net/npm/@mediapipe/face_detection',
+          solutionPath: 'https://cdn.jsdelivr.net/npm/@mediapipe/face_detection@0.4',
+          modelType: 'short', // より高速で複数人検出に適している
+          maxFaces: 10, // 最大10人まで検出可能
         }
       )
-
-      this.initialized = true
-    } catch (error) {
-      throw new Error('Face detection model initialization failed')
+    } catch (mediapipeError) {
+      console.warn('MediaPipe runtime failed, trying TensorFlow.js runtime:', mediapipeError)
+      // TensorFlow.jsランタイムにフォールバック（複数人検出向け設定）
+      this.detector = await faceDetection.createDetector(
+        faceDetection.SupportedModels.MediaPipeFaceDetector,
+        {
+          runtime: 'tfjs',
+          modelType: 'short',
+          maxFaces: 10,
+        }
+      )
     }
+
+    this.initialized = true
+    console.log('Face detection: Model initialized successfully')
   }
 
   async detectFaces(image: ImageData | HTMLImageElement | HTMLCanvasElement): Promise<FaceDetectionResult> {

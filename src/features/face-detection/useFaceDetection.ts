@@ -34,10 +34,14 @@ export const useFaceDetection = (): UseFaceDetectionReturn => {
 
     try {
       setError(null)
+      console.log('Starting face detection initialization...')
       await detectorRef.current.initialize()
       setIsInitialized(detectorRef.current.isInitialized())
+      console.log('Face detection initialization completed')
     } catch (err) {
-      setError('顔検出の初期化に失敗しました')
+      console.error('Face detection initialization failed:', err)
+      const errorMessage = err instanceof Error ? err.message : '顔検出の初期化に失敗しました'
+      setError(errorMessage)
     }
   }, [])
 

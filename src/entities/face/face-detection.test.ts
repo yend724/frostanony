@@ -42,7 +42,7 @@ describe('FaceDetector', () => {
         faceDetection.SupportedModels.MediaPipeFaceDetector,
         {
           runtime: 'mediapipe',
-          solutionPath: 'https://cdn.jsdelivr.net/npm/@mediapipe/face_detection',
+          solutionPath: 'https://cdn.jsdelivr.net/npm/@mediapipe/face_detection@0.4',
         }
       )
     })
