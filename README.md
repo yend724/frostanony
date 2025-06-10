@@ -183,16 +183,4 @@ npm run test:ui
 
 ## ライセンス
 
-MIT License
-
-## 貢献
-
-1. このリポジトリをフォーク
-2. 機能ブランチを作成 (`git checkout -b feature/amazing-feature`)
-3. 変更をコミット (`git commit -m 'Add amazing feature'`)
-4. ブランチにプッシュ (`git push origin feature/amazing-feature`)
-5. プルリクエストを作成
-
-## サポート
-
-バグ報告や機能要求は、[Issues](issues)でお知らせください。
+[MIT License](LICENSE)
