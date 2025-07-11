@@ -9,7 +9,8 @@
   "packageRules": [
     {
       "matchUpdateTypes": ["patch"],
-      "groupName": "patch updates"
+      "groupName": "patch updates",
+      "automerge": true
     }
   ]
 }
